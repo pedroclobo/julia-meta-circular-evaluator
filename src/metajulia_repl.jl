@@ -50,7 +50,7 @@ or_lvalue(expr) = expr.args[1]
 or_rvalue(expr) = expr.args[2]
 evaluate_or(expr) = evaluate(or_lvalue(expr)) || evaluate(or_rvalue(expr))
 
-is_if(expr) = isa(expr, Expr) && expr.head == :if
+is_if(expr) = isa(expr, Expr) && (expr.head == :if || expr.head == :elseif)
 if_condition(expr) = expr.args[1]
 if_consequence(expr) = expr.args[2]
 if_alternative(expr) = expr.args[3]
@@ -59,6 +59,8 @@ evaluate_if(expr) = evaluate(if_condition(expr)) ? evaluate(if_consequence(expr)
 is_block(expr) = isa(expr, Expr) && expr.head == :block
 block_expressions(expr) = filter(x -> !isa(x, LineNumberNode), (expr.args))
 evaluate_block(expr) = (exprs = map(evaluate, block_expressions(expr)); last(exprs))
+
+
 
 function metajulia_repl()
     while true

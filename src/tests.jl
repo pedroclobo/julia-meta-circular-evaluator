@@ -26,6 +26,9 @@ test("3 > 2 || 3 < 2", true)
 test("3 > 2 ? 1 : 0", 1)
 test("3 < 2 ? 1 : 0", 0)
 test("if 3 > 2 1 else 0 end", 1)
+test("if 3 < 2 1 elseif 2 > 3 2 else 0 end", 0)
+test("if 3 < 2 1 elseif 2 < 3 2 else 0 end", 2)
+test("if 1 < 2 1 elseif 3 < 4 2 else 0 end", 1)
 
 # Blocks
 test("(1+2; 2*3; 3/4)", 0.75)
