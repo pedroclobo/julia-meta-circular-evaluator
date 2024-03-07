@@ -57,7 +57,7 @@ if_alternative(expr) = expr.args[3]
 evaluate_if(expr) = evaluate(if_condition(expr)) ? evaluate(if_consequence(expr)) : evaluate(if_alternative(expr))
 
 is_block(expr) = isa(expr, Expr) && expr.head == :block
-block_expressions(expr) = filter(x -> isa(x, Expr), (expr.args))
+block_expressions(expr) = filter(x -> !isa(x, LineNumberNode), (expr.args))
 evaluate_block(expr) = (exprs = map(evaluate, block_expressions(expr)); last(exprs))
 
 function metajulia_repl()
