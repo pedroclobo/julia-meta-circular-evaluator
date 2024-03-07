@@ -9,6 +9,8 @@ function evaluate(expr)
         evaluate_or(expr)
     elseif is_if(expr)
         evaluate_if(expr)
+    elseif is_block(expr)
+        evaluate_block(expr)
     else
         throw("Not implemented")
     end
@@ -27,6 +29,8 @@ function evaluate_call(expr)
         sum(args)
     elseif func == :*
         prod(args)
+    elseif func == :/
+        args[1] / args[2]
     elseif func == :>
         args[1] > args[2]
     elseif func == :<
@@ -50,8 +54,11 @@ is_if(expr) = isa(expr, Expr) && expr.head == :if
 if_condition(expr) = expr.args[1]
 if_consequence(expr) = expr.args[2]
 if_alternative(expr) = expr.args[3]
-
 evaluate_if(expr) = evaluate(if_condition(expr)) ? evaluate(if_consequence(expr)) : evaluate(if_alternative(expr))
+
+is_block(expr) = isa(expr, Expr) && expr.head == :block
+block_expressions(expr) = filter(x -> isa(x, Expr), (expr.args))
+evaluate_block(expr) = (exprs = map(evaluate, block_expressions(expr)); last(exprs))
 
 function metajulia_repl()
     while true
