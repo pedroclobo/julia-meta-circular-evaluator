@@ -25,3 +25,7 @@ test("3 > 2 || 3 < 2", true)
 # If Expressions
 test("3 > 2 ? 1 : 0", 1)
 test("3 < 2 ? 1 : 0", 0)
+
+# Blocks
+test("(1+2; 2*3; 3/4)", 0.75)
+test("begin 1+2; 2*3; 3/4 end", 0.75)
