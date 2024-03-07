@@ -1,10 +1,10 @@
 function evaluate(expr)
-    if self_evaluating(expr)
+    if is_self_evaluating(expr)
         expr
     elseif is_call(expr)
         evaluate_call(expr)
     elseif is_and(expr)
-        evaluate_and(expr) 
+        evaluate_and(expr)
     elseif is_or(expr)
         evaluate_or(expr)
     elseif is_if(expr)
@@ -14,29 +14,15 @@ function evaluate(expr)
     end
 end
 
-function self_evaluating(expr)
-    isa(expr, Int) || isa(expr, Bool) || isa(expr, String)
-end
+is_self_evaluating(expr) = isa(expr, Int) || isa(expr, Bool) || isa(expr, String)
 
-function is_call(expr)
-    isa(expr, Expr) && expr.head == :call
-end
-
-function is_and(expr)
-    isa(expr, Expr) && expr.head == :(&&)
-end
-
-function is_or(expr)
-    isa(expr, Expr) && expr.head == :(||)
-end
-
-function is_if(expr)
-    isa(expr, Expr) && expr.head == :if
-end
+is_call(expr) = isa(expr, Expr) && expr.head == :call
+call_operator(expr) = expr.args[1]
+call_arguments(expr) = expr.args[2:end]
 
 function evaluate_call(expr)
-    func = expr.args[1]
-    args = map(evaluate, expr.args[2:end])
+    func = call_operator(expr)
+    args = map(evaluate, call_arguments(expr))
     if func == :+
         sum(args)
     elseif func == :*
@@ -50,22 +36,22 @@ function evaluate_call(expr)
     end
 end
 
-function evaluate_and(expr)
-    leftExpr = evaluate(expr.args[1])
-    rightExpr = evaluate(expr.args[2])
-    leftExpr && rightExpr
-end
+is_and(expr) = isa(expr, Expr) && expr.head == :(&&)
+and_lvalue(expr) = expr.args[1]
+and_rvalue(expr) = expr.args[2]
+evaluate_and(expr) = evaluate(and_lvalue(expr)) && evaluate(and_rvalue(expr))
 
-function evaluate_or(expr)
-    leftExpr = evaluate(expr.args[1])
-    rightExpr = evaluate(expr.args[2])
-    leftExpr || rightExpr
-end
+is_or(expr) = isa(expr, Expr) && expr.head == :(||)
+or_lvalue(expr) = expr.args[1]
+or_rvalue(expr) = expr.args[2]
+evaluate_or(expr) = evaluate(or_lvalue(expr)) || evaluate(or_rvalue(expr))
 
-function evaluate_if(expr)
-    condition = evaluate(expr.args[1])
-    condition ? evaluate(expr.args[2]) : evaluate(expr.args[3])
-end
+is_if(expr) = isa(expr, Expr) && expr.head == :if
+if_condition(expr) = expr.args[1]
+if_consequence(expr) = expr.args[2]
+if_alternative(expr) = expr.args[3]
+
+evaluate_if(expr) = evaluate(if_condition(expr)) ? evaluate(if_consequence(expr)) : evaluate(if_alternative(expr))
 
 function metajulia_repl()
     while true
