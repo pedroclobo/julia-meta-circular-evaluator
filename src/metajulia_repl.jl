@@ -3,6 +3,12 @@ function evaluate(expr)
         expr
     elseif is_call(expr)
         evaluate_call(expr)
+    elseif is_and(expr)
+        evaluate_and(expr) 
+    elseif is_or(expr)
+        evaluate_or(expr)
+    elseif is_if(expr)
+        evaluate_if(expr)
     else
         throw("Not implemented")
     end
@@ -14,6 +20,18 @@ end
 
 function is_call(expr)
     isa(expr, Expr) && expr.head == :call
+end
+
+function is_and(expr)
+    isa(expr, Expr) && expr.head == :(&&)
+end
+
+function is_or(expr)
+    isa(expr, Expr) && expr.head == :(||)
+end
+
+function is_if(expr)
+    isa(expr, Expr) && expr.head == :if
 end
 
 function evaluate_call(expr)
@@ -30,6 +48,23 @@ function evaluate_call(expr)
     else
         throw("Not implemented (EVALUATE_CALL)")
     end
+end
+
+function evaluate_and(expr)
+    leftExpr = evaluate(expr.args[1])
+    rightExpr = evaluate(expr.args[2])
+    leftExpr && rightExpr
+end
+
+function evaluate_or(expr)
+    leftExpr = evaluate(expr.args[1])
+    rightExpr = evaluate(expr.args[2])
+    leftExpr || rightExpr
+end
+
+function evaluate_if(expr)
+    condition = evaluate(expr.args[1])
+    condition ? evaluate(expr.args[2]) : evaluate(expr.args[3])
 end
 
 function metajulia_repl()

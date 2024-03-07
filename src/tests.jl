@@ -21,3 +21,7 @@ test("3 > 2", true)
 test("3 < 2", false)
 test("3 > 2 && 3 < 2", false)
 test("3 > 2 || 3 < 2", true)
+
+# If Expressions
+test("3 > 2 ? 1 : 0", 1)
+test("3 < 2 ? 1 : 0", 0)
