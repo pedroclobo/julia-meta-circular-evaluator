@@ -16,6 +16,8 @@ function evaluate(expr)
     end
 end
 
+evaluate_exprs(exprs) = map(evaluate, exprs)
+
 is_self_evaluating(expr) = isa(expr, Int) || isa(expr, Bool) || isa(expr, String)
 
 is_call(expr) = isa(expr, Expr) && expr.head == :call
@@ -24,7 +26,7 @@ call_arguments(expr) = expr.args[2:end]
 
 function evaluate_call(expr)
     func = call_operator(expr)
-    args = map(evaluate, call_arguments(expr))
+    args = evaluate_exprs(call_arguments(expr))
     if func == :+
         sum(args)
     elseif func == :*
@@ -59,8 +61,6 @@ evaluate_if(expr) = evaluate(if_condition(expr)) ? evaluate(if_consequence(expr)
 is_block(expr) = isa(expr, Expr) && expr.head == :block
 block_expressions(expr) = filter(x -> !isa(x, LineNumberNode), (expr.args))
 evaluate_block(expr) = (exprs = map(evaluate, block_expressions(expr)); last(exprs))
-
-
 
 function metajulia_repl()
     while true
