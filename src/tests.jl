@@ -33,3 +33,8 @@ test("if 1 < 2 1 elseif 3 < 4 2 else 0 end", 1)
 # Blocks
 test("(1+2; 2*3; 3/4)", 0.75)
 test("begin 1+2; 2*3; 3/4 end", 0.75)
+
+# Let Expressions
+test("let x = 1; x end", 1)
+test("let x = 2; x * 3 end", 6)
+test("let a = 1, b = 2; let a = 3; a+b end end", 5)
