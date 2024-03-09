@@ -4,13 +4,14 @@ struct Env stack end
 
 empty_env() = Env([])
 
-function extend_env!(env, names, values)
+function extend_env(env, names, values)
+    new_env = Env(deepcopy(env.stack))
     new_frame = Frame(Dict())
     for (name, value) in zip(names, values)
         new_frame.bindings[name] = value
     end
-    push!(env.stack, new_frame)
-    env
+    push!(new_env.stack, new_frame)
+    new_env
 end
 
 # Evaluation
@@ -90,7 +91,7 @@ let_inits(expr) = is_block(expr.args[1]) ?  [expr.args[2] for expr in block_expr
 let_body(expr) = expr.args[2]
 function eval_let(expr, env)
     values = eval_exprs(let_inits(expr), env)
-    env = extend_env!(env, let_names(expr), values)
+    env = extend_env(env, let_names(expr), values)
     eval(let_body(expr), env)
 end
 
