@@ -4,7 +4,7 @@ include("metajulia_repl.jl")
 
 function test(input, expected)
     println("Testing `$input`")
-    @test evaluate(Meta.parse(input), empty_env()) == expected
+    @test eval(Meta.parse(input), empty_env()) == expected
 end
 
 # Self-Evaluating Expressions
