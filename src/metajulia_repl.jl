@@ -11,6 +11,10 @@ function evaluate(expr, env)
         evaluate_if(expr, env)
     elseif is_block(expr)
         evaluate_block(expr, env)
+    elseif is_let(expr)
+        evaluate_let(expr, env)
+    elseif is_name(expr)
+        evaluate_name(expr, env)
     else
         throw("Not implemented")
     end
@@ -61,6 +65,53 @@ evaluate_if(expr, env) = evaluate(if_condition(expr), env) ? evaluate(if_consequ
 is_block(expr) = isa(expr, Expr) && expr.head == :block
 block_expressions(expr) = filter(x -> !isa(x, LineNumberNode), (expr.args))
 evaluate_block(expr, env) = (exprs = map((arg) -> evaluate(arg, env), block_expressions(expr)); last(exprs))
+
+is_name(expr) = isa(expr, Symbol)
+function evaluate_name(name, env)
+  for frame in reverse(env.stack)
+    if haskey(frame.bindings, name)
+      return frame.bindings[name]
+    end
+  end
+  throw(ArgumentError("Variable '$name' not found"))
+end
+
+is_let(expr) = isa(expr, Expr) && expr.head == :let
+function let_names(expr)
+    res = []
+    names = expr.args[1] # names
+    if is_block(names)
+        names = block_expressions(names)
+        for i in 1:1:length(names)
+            res = [res; names[i].args[1]]
+        end
+    else
+        res = [res; names.args[1]]
+    end
+    res
+end
+
+function let_inits(expr)
+    res = []
+    names = expr.args[1]
+    if is_block(names)
+        names = block_expressions(names)
+        for i in 1:1:length(names)
+            res = [res; names[i].args[2]]
+        end
+    else
+        res = [names.args[2]]
+    end
+    res
+end
+
+let_body(expr) = expr.args[2]
+
+function evaluate_let(expr, env)
+    values = evaluate_exprs(let_inits(expr), env)
+    env = add_binding(env, let_names(expr), values)
+    evaluate(let_body(expr), env)
+end
 
 struct Frame
   bindings
