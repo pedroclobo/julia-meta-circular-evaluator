@@ -94,3 +94,10 @@ test("((x, y, z) -> x * y * z)(1, 2, 3)", 6)
 test("let x(y) = y+1; x(1) end", 2)
 test("let x(y,z) = y+z; x(1,2) end", 3)
 test("let x = 1, y(x) = x+1; y(x+1) end", 3)
+
+# Assignments and Definitions
+test("(x = 1 + 2; x + 2)", 5)
+test("(x = 1 + 2; x = 2; x)", 2)
+test("(x = 3; triple(a) = a + a + a; triple(x + 3))", 18)
+test("(baz = 3; let x = 0; baz = 5 end + baz)", 8)
+test("(baz = 3; let ; baz = 6 end + baz)", 9)
