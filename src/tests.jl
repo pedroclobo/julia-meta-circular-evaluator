@@ -1,10 +1,12 @@
-using Test
-
 include("metajulia_repl.jl")
 
 function test(input, expected)
-    println("Testing `$input`")
-    @test eval(Meta.parse(input), empty_env()) == expected
+    try
+        eval(Meta.parse(input), empty_env()) == expected || error("Test Failed")
+    catch e
+        println("FAILED\n$input")
+        rethrow(e)
+    end
 end
 
 # Self-Evaluating Expressions
