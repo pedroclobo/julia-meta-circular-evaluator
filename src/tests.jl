@@ -38,3 +38,14 @@ test("begin 1+2; 2*3; 3/4 end", 0.75)
 test("let x = 1; x end", 1)
 test("let x = 2; x * 3 end", 6)
 test("let a = 1, b = 2; let a = 3; a+b end end", 5)
+
+# Anonymous Functions
+test("(() -> 5)()", 5)
+test("(x -> x + 1)(1)", 2)
+test("((x, y) -> x + y)(1, 2)", 3)
+test("((x, y, z) -> x * y * z)(1, 2, 3)", 6)
+
+# Let Expression with Function Definitions
+test("let x(y) = y+1; x(1) end", 2)
+test("let x(y,z) = y+z; x(1,2) end", 3)
+test("let x = 1, y(x) = x+1; y(x+1) end", 3)
