@@ -2,7 +2,14 @@
 struct Frame bindings end
 struct Env stack end
 
-empty_env() = Env([])
+initial_bindings = Dict(
+    :+ => +, :- => -, :* => *, :/ => /, :÷ => div, :\ => \, :% => %, :^ => ^, :√ => √,
+    :! => !,
+    :~ => ~, :& => &, :| => |, :⊻ => ⊻, :⊼ => ⊼, :⊽ => ⊽, :>>> => >>>, :>> => >>, :<< => <<,
+    :(==) => ==, :(!=) => !=, :≠ => ≠, :(<) => <, :(<=) => <=, :≤ => ≤, :(>) => >, :(>=) => >=, :≥ => ≥,
+)
+
+empty_env() = Env([Frame(initial_bindings)])
 
 function extend_env(env, names, values)
     new_env = Env(deepcopy(env.stack))
@@ -31,23 +38,21 @@ end
 eval_exprs(exprs, env) = map(expr -> eval(expr, env), exprs)
 
 # Self-Evaluating Expressions
-is_self_evaluating(expr) = isa(expr, Int) || isa(expr, Bool) || isa(expr, String)
+is_self_evaluating(expr) = isa(expr, Int) || isa(expr, Float64) || isa(expr, Bool) || isa(expr, String) || is_lambda(expr)
+
+# Lambda Expressions
+is_lambda(expr) = isa(expr, Expr) && expr.head == :(->)
+lambda_params(expr) = isa(expr.args[1], Symbol) ? [expr.args[1]] : expr.args[1].args
+lambda_body(expr) = expr.args[2]
 
 # Call Expressions
 is_call(expr) = isa(expr, Expr) && expr.head == :call
 call_op(call) = call.args[1]
 call_args(call) = call.args[2:end]
 function eval_call(call, env)
-    func = call_op(call)
+    f = eval(call_op(call), env)
     args = eval_exprs(call_args(call), env)
-
-    if func == :+ sum(args)
-    elseif func == :* prod(args)
-    elseif func == :/ args[1] / args[2]
-    elseif func == :> args[1] > args[2]
-    elseif func == :< args[1] < args[2]
-    else throw("Not implemented (EVAL_CALL)")
-    end
+    is_lambda(f) ? eval(lambda_body(f), extend_env(env, lambda_params(f), eval_exprs(args, env))) : f(args...)
 end
 
 # And and Or Expressions
@@ -81,19 +86,24 @@ function eval_name(name, env)
             return frame.bindings[name]
         end
     end
-    throw(ArgumentError("Variable '$name' not found"))
+    throw("Variable '$name' not found")
 end
 
 # Let Expressions
 is_let(expr) = isa(expr, Expr) && expr.head == :let
-let_names(expr) = is_block(expr.args[1]) ?  [expr.args[1] for expr in block_exprs(expr.args[1])] : [expr.args[1].args[1]]
-let_inits(expr) = is_block(expr.args[1]) ?  [expr.args[2] for expr in block_exprs(expr.args[1])] : [expr.args[1].args[2]]
-let_body(expr) = expr.args[2]
-function eval_let(expr, env)
-    values = eval_exprs(let_inits(expr), env)
-    env = extend_env(env, let_names(expr), values)
-    eval(let_body(expr), env)
+function let_names(expr)
+    extract_names(expr) = is_call(expr.args[1]) ? expr.args[1].args[1] : expr.args[1]
+    is_block(expr.args[1]) ? [extract_names(expr) for expr in block_exprs(expr.args[1])] : [extract_names(expr.args[1])]
 end
+function let_inits(expr)
+    extract_inits(expr) = is_call(expr.args[1]) ? make_function(expr.args[1].args[2:end], expr.args[2]) : expr.args[2]
+    is_block(expr.args[1]) ? [extract_inits(expr) for expr in block_exprs(expr.args[1])] : [extract_inits(expr.args[1])]
+end
+let_body(expr) = expr.args[2]
+eval_let(expr, env) = eval(let_body(expr),  extend_env(env, let_names(expr), eval_exprs(let_inits(expr), env)))
+
+# Functions
+make_function(args, body) = :($(Expr(:tuple, (args...))) -> $(body.args[2]))
 
 # REPL
 function metajulia_repl()
