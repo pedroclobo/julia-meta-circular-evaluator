@@ -171,3 +171,28 @@ begin
     sum(f, a, b) = a > b ?  0 : f(a) + sum(f, a + 1, b)
     sum(triple, 1, 10)
 end""", 165)
+test("""
+begin
+    incr =
+        let priv_counter = 0
+            () -> priv_counter = priv_counter + 1
+        end
+    incr()
+end""", 1)
+test("""
+begin
+    incr = let priv_counter = 0
+        () -> priv_counter = priv_counter + 1
+    end
+    incr()
+    incr()
+end""", 2)
+test("""
+begin
+    incr = let priv_counter = 0
+        () -> priv_counter = priv_counter + 1
+    end
+    incr()
+    incr()
+    incr()
+end""", 3)
