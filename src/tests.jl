@@ -72,19 +72,55 @@ test("3 < 2", false)
 # If Expressions
 test("3 > 2 ? 1 : 0", 1)
 test("3 < 2 ? 1 : 0", 0)
-test("if 3 > 2 1 else 0 end", 1)
-test("if 3 < 2 1 elseif 2 > 3 2 else 0 end", 0)
-test("if 3 < 2 1 elseif 2 < 3 2 else 0 end", 2)
-test("if 1 < 2 1 elseif 3 < 4 2 else 0 end", 1)
+test("""
+if 3 > 2
+    1
+else
+    0
+end""", 1)
+test("""
+if 3 < 2
+    1
+elseif 2 > 3
+    2
+else
+    0
+end""", 0)
+test("""
+if 3 < 2
+    1
+elseif 2 < 3
+    2
+else
+    0
+end""", 2)
+test("""
+if 1 < 2
+    1
+elseif 3 < 4
+    2
+else
+    0
+end""", 1)
 
 # Blocks
 test("(1+2; 2*3; 3/4)", 0.75)
 test("begin 1+2; 2*3; 3/4 end", 0.75)
+test("""
+begin
+    1+2
+    2*3
+    3/4
+end""", 0.75)
 
 # Let Expressions
 test("let x = 1; x end", 1)
 test("let x = 2; x * 3 end", 6)
 test("let a = 1, b = 2; let a = 3; a+b end end", 5)
+test("""
+let a = 1
+    a + 2
+end""", 3)
 
 # Anonymous Functions
 test("(() -> 5)()", 5)
@@ -98,8 +134,40 @@ test("let x(y,z) = y+z; x(1,2) end", 3)
 test("let x = 1, y(x) = x+1; y(x+1) end", 3)
 
 # Assignments and Definitions
-test("(x = 1 + 2; x + 2)", 5)
-test("(x = 1 + 2; x = 2; x)", 2)
-test("(x = 3; triple(a) = a + a + a; triple(x + 3))", 18)
-test("(baz = 3; let x = 0; baz = 5 end + baz)", 8)
-test("(baz = 3; let ; baz = 6 end + baz)", 9)
+test("""
+begin
+    x = 1 + 2
+    x + 2
+end""", 5)
+test("""
+begin
+    x = 1 + 2
+    x = 2
+    x
+end""", 2)
+test("""
+begin
+    x = 3
+    triple(a) = a + a + a
+    triple(x + 3)
+end""", 18)
+test("""
+begin
+    baz = 3
+    let x = 0
+        baz = 5
+    end + baz
+end""", 8)
+test("""
+begin
+    baz = 3
+        let
+            baz = 6
+        end + baz
+end""", 9)
+test("""
+begin
+    triple(a) = a + a + a
+    sum(f, a, b) = a > b ?  0 : f(a) + sum(f, a + 1, b)
+    sum(triple, 1, 10)
+end""", 165)
