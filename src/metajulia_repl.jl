@@ -2,7 +2,7 @@
 struct Frame bindings end
 struct Env stack end
 
-initial_bindings = Dict(
+initial_bindings::Dict{Symbol, Any} = Dict(
     :+ => +, :- => -, :* => *, :/ => /, :÷ => div, :\ => \, :% => %, :^ => ^, :√ => √,
     :! => !,
     :~ => ~, :& => &, :| => |, :⊻ => ⊻, :⊼ => ⊼, :⊽ => ⊽, :>>> => >>>, :>> => >>, :<< => <<,
@@ -21,6 +21,27 @@ function extend_env(env, names, values)
     new_env
 end
 
+extend_env!(env, name, value) = env.stack[end].bindings[name] = value
+
+function modify_env!(env, name, value)
+    for frame in reverse(env.stack)
+        if haskey(frame.bindings, name)
+            frame.bindings[name] = value
+            return
+        end
+    end
+    throw("Variable '$name' not found")
+end
+
+function has_name(name, env)
+    for frame in reverse(env.stack)
+        if haskey(frame.bindings, name)
+            return true
+        end
+    end
+    false
+end
+
 # Evaluation
 function eval(expr, env)
     if is_self_evaluating(expr) expr
@@ -31,6 +52,8 @@ function eval(expr, env)
     elseif is_block(expr) eval_block(expr, env)
     elseif is_let(expr) eval_let(expr, env)
     elseif is_name(expr) eval_name(expr, env)
+    elseif is_definition(expr, env) eval_definition(expr, env)
+    elseif is_assignment(expr, env) eval_assignment(expr, env)
     else throw("Not implemented (EVAL)")
     end
 end
@@ -104,6 +127,17 @@ eval_let(expr, env) = eval(let_body(expr),  extend_env(env, let_names(expr), eva
 
 # Functions
 make_function(args, body) = :($(Expr(:tuple, (args...))) -> $(body.args[2]))
+
+# Assignments/Definitions
+is_definition(expr, env) = isa(expr, Expr) && expr.head == :(=) && !has_name(expr.args[1], env)
+definition_name(expr) = is_call(expr.args[1]) ? expr.args[1].args[1] : expr.args[1]
+definition_init(expr) = is_call(expr.args[1]) ? make_function(expr.args[1].args[2:end], expr.args[2]) : expr.args[2]
+eval_definition(expr, env) = (extend_env!(env, definition_name(expr), eval(definition_init(expr), env)); eval(definition_init(expr), env))
+
+is_assignment(expr, env) = isa(expr, Expr) && expr.head == :(=) && has_name(expr.args[1], env)
+assignment_name(expr) = expr.args[1]
+assignment_init(expr) = expr.args[2]
+eval_assignment(expr, env) = (modify_env!(env, definition_name(expr), eval(definition_init(expr), env)); eval(definition_init(expr), env))
 
 # REPL
 function metajulia_repl()
