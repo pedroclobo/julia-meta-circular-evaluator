@@ -53,7 +53,9 @@ function eval(expr, env)
     elseif is_let(expr) eval_let(expr, env)
     elseif is_name(expr) eval_name(expr, env)
     elseif is_definition(expr, env) eval_definition(expr, env)
+    elseif is_function_definition(expr, env) eval_function_definition(expr, env)
     elseif is_assignment(expr, env) eval_assignment(expr, env)
+    # elseif is_function_assignment(expr, env) eval_function_assignment(expr, env)
     elseif is_lambda(expr) eval_lambda(expr)
     else throw("Not implemented (EVAL)")
     end
@@ -68,7 +70,8 @@ is_self_evaluating(expr) = isa(expr, Int) || isa(expr, Float64) || isa(expr, Boo
 is_lambda(expr) = isa(expr, Expr) && expr.head == :(->)
 lambda_params(expr) = isa(expr.args[1], Symbol) ? [expr.args[1]] : expr.args[1].args
 lambda_body(expr) = expr.args[2]
-eval_lambda(expr) = make_function(lambda_params(expr), lambda_body(expr))
+eval_lambda(expr) = make_lambda(lambda_params(expr), lambda_body(expr))
+make_lambda(args, body) = :($(Expr(:tuple, (args...))) -> $(body.args[2]))
 
 # Call Expressions
 is_call(expr) = isa(expr, Expr) && expr.head == :call
@@ -121,25 +124,47 @@ function let_names(expr)
     is_block(expr.args[1]) ? [extract_names(expr) for expr in block_exprs(expr.args[1])] : [extract_names(expr.args[1])]
 end
 function let_inits(expr)
-    extract_inits(expr) = is_call(expr.args[1]) ? make_function(expr.args[1].args[2:end], expr.args[2]) : expr.args[2]
+    extract_inits(expr) = is_call(expr.args[1]) ? make_lambda(expr.args[1].args[2:end], expr.args[2]) : expr.args[2]
     is_block(expr.args[1]) ? [extract_inits(expr) for expr in block_exprs(expr.args[1])] : [extract_inits(expr.args[1])]
 end
 let_body(expr) = expr.args[2]
 eval_let(expr, env) = eval(let_body(expr),  extend_env(env, let_names(expr), eval_exprs(let_inits(expr), env)))
 
-# Functions
-make_function(args, body) = :($(Expr(:tuple, (args...))) -> $(body.args[2]))
-
 # Assignments/Definitions
-is_definition(expr, env) = isa(expr, Expr) && expr.head == :(=) && !has_name(expr.args[1], env)
-definition_name(expr) = is_call(expr.args[1]) ? expr.args[1].args[1] : expr.args[1]
-definition_init(expr) = is_call(expr.args[1]) ? make_function(expr.args[1].args[2:end], expr.args[2]) : expr.args[2]
-eval_definition(expr, env) = (extend_env!(env, definition_name(expr), eval(definition_init(expr), env)); eval(definition_init(expr), env))
+is_definition(expr, env) =
+    isa(expr, Expr) && expr.head == :(=) && !has_name(expr.args[1], env) && isa(expr.args[1], Symbol)
+definition_name(expr) = expr.args[1]
+definition_init(expr) = expr.args[2]
+eval_definition(expr, env) =
+    let
+        init = eval(definition_init(expr), env)
+        extend_env!(env, definition_name(expr), eval(definition_init(expr), env))
+        init
+    end
 
-is_assignment(expr, env) = isa(expr, Expr) && expr.head == :(=) && has_name(expr.args[1], env)
+is_function_definition(expr, env) =
+    isa(expr, Expr) && expr.head == :(=) && !has_name(expr.args[1], env) && isa(expr.args[1], Expr)
+function_definition_name(expr) = expr.args[1].args[1]
+function_definition_init(expr) = make_lambda(expr.args[1].args[2:end], expr.args[2])
+eval_function_definition(expr, env) =
+    eval_definition(:($(function_definition_name(expr)) = $(function_definition_init(expr))), env)
+
+is_assignment(expr, env) =
+    isa(expr, Expr) && expr.head == :(=) && has_name(expr.args[1], env) && isa(expr.args[1], Symbol)
 assignment_name(expr) = expr.args[1]
 assignment_init(expr) = expr.args[2]
-eval_assignment(expr, env) = (modify_env!(env, definition_name(expr), eval(definition_init(expr), env)); eval(definition_init(expr), env))
+eval_assignment(expr, env) =
+    let init = eval(assignment_init(expr), env)
+        modify_env!(env, assignment_name(expr), init)
+        init
+    end
+
+is_function_assignment(expr, env) =
+    isa(expr, Expr) && expr.head == :(=) && has_name(expr.args[1], env) && isa(expr.args[1], Expr)
+function_assignment_name(expr) = expr.args[1].args[1]
+function_assignment_init(expr) = make_lambda(expr.args[1].args[2:end], expr.args[2])
+eval_function_assignment(expr, env) =
+    eval_assignment(:($(function_assignment_name(expr)) = $(function_assignment_init(expr))), env)
 
 # REPL
 function metajulia_repl()
