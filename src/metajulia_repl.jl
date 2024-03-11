@@ -54,6 +54,7 @@ function eval(expr, env)
     elseif is_name(expr) eval_name(expr, env)
     elseif is_definition(expr, env) eval_definition(expr, env)
     elseif is_assignment(expr, env) eval_assignment(expr, env)
+    elseif is_lambda(expr) eval_lambda(expr)
     else throw("Not implemented (EVAL)")
     end
 end
@@ -67,6 +68,7 @@ is_self_evaluating(expr) = isa(expr, Int) || isa(expr, Float64) || isa(expr, Boo
 is_lambda(expr) = isa(expr, Expr) && expr.head == :(->)
 lambda_params(expr) = isa(expr.args[1], Symbol) ? [expr.args[1]] : expr.args[1].args
 lambda_body(expr) = expr.args[2]
+eval_lambda(expr) = make_function(lambda_params(expr), lambda_body(expr))
 
 # Call Expressions
 is_call(expr) = isa(expr, Expr) && expr.head == :call
