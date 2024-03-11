@@ -173,6 +173,18 @@ begin
 end""", 165)
 test("""
 begin
+    f(a) = a + 1
+    f(a) = 2 * a
+    f(3)
+end""", 6)
+test("""
+begin
+    f = x -> x + 1
+    f = x -> 2*x
+    f(3)
+end""", 6)
+test("""
+begin
     incr =
         let priv_counter = 0
             () -> priv_counter = priv_counter + 1
