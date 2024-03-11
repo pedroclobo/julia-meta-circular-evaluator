@@ -208,3 +208,21 @@ begin
     incr()
     incr()
 end""", 3)
+test("let secret = 1234; global show_secret() = secret end; show_secret()", 1234)
+test("""
+begin
+    let priv_balance = 0
+        global deposit = quantity -> priv_balance = priv_balance + quantity
+        global withdraw = quantity -> priv_balance = priv_balance - quantity
+    end
+    deposit(100)
+end""", 200)
+test("""
+begin
+    let priv_balance = 0
+        global deposit = quantity -> priv_balance = priv_balance + quantity
+        global withdraw = quantity -> priv_balance = priv_balance - quantity
+    end
+    deposit(100)
+    withdraw(150)
+end""", 150)
