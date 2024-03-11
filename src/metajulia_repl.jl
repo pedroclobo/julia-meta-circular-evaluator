@@ -55,7 +55,7 @@ function eval(expr, env)
     elseif is_definition(expr, env) eval_definition(expr, env)
     elseif is_function_definition(expr, env) eval_function_definition(expr, env)
     elseif is_assignment(expr, env) eval_assignment(expr, env)
-    # elseif is_function_assignment(expr, env) eval_function_assignment(expr, env)
+    elseif is_function_assignment(expr, env) eval_function_assignment(expr, env)
     elseif is_lambda(expr) eval_lambda(expr)
     else throw("Not implemented (EVAL)")
     end
