@@ -1,6 +1,13 @@
 struct Frame bindings end
 struct Env stack end
 
+#=
+Empty environment bindings
+
+This includes the basic arithmetic operations, logical operations,
+and comparison operations.
+=#
+
 initial_bindings::Dict{Symbol, Any} = Dict(
     :+ => +, :- => -, :* => *, :/ => /, :÷ => div, :\ => \, :% => %, :^ => ^, :√ => √,
     :! => !,
@@ -10,6 +17,7 @@ initial_bindings::Dict{Symbol, Any} = Dict(
 
 empty_env() = Env([Frame(initial_bindings)])
 
+# Copy the current environment and extend it with new bindings in a new frame
 function extend_env(env, names, values)
     new_env = Env(deepcopy(env.stack))
     new_frame = Frame(Dict())
@@ -20,8 +28,10 @@ function extend_env(env, names, values)
     new_env
 end
 
+# Destructively extend the environment with new binding at the last frame
 extend_env!(env, name, value) = env.stack[end].bindings[name] = value
 
+# Destructively modify the environment by changing the value of an existing binding
 function modify_env!(env, name, value)
     for frame in reverse(env.stack)
         if haskey(frame.bindings, name)

@@ -1,4 +1,3 @@
-# And and Or Expressions
 is_and(expr) = isa(expr, Expr) && expr.head == :(&&)
 and_lvalue(and) = and.args[1]
 and_rvalue(and) = and.args[2]
