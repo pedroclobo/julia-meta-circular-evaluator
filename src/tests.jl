@@ -114,6 +114,10 @@ begin
 end""", 0.75)
 
 # Let Expressions
+test("""
+let
+    1+2
+end""", 3)
 test("let x = 1; x end", 1)
 test("let x = 2; x * 3 end", 6)
 test("let a = 1, b = 2; let a = 3; a+b end end", 5)
@@ -211,6 +215,13 @@ end""", 3)
 test("let secret = 1234; global show_secret() = secret end; show_secret()", 1234)
 test("""
 begin
+    let
+        global x = 1
+    end
+    x
+end""", 1)
+test("""
+begin
     let priv_balance = 0
         global deposit = quantity -> priv_balance = priv_balance + quantity
         global withdraw = quantity -> priv_balance = priv_balance - quantity
@@ -226,3 +237,22 @@ begin
     deposit(100)
     withdraw(150)
 end""", 150)
+
+# Short-Circuit
+test("""
+let quotient_or_false(a, b) = !(b == 0) && a/b
+    quotient_or_false(6, 2)
+end
+""", 3)
+test("""
+let quotient_or_false(a, b) = !(b == 0) && a/b
+    quotient_or_false(6, 0)
+end
+""", false)
+
+# Recursive Functions
+test("""
+let fact(n) = n == 0 ? 1 : n * fact(n - 1)
+    fact(3)
+end
+""", 6)
