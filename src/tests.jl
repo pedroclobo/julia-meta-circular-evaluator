@@ -1,4 +1,4 @@
-include("metajulia_repl.jl")
+include("evaluator.jl")
 
 function test(input, expected)
     try
