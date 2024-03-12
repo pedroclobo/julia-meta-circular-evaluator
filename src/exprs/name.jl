@@ -1,5 +1,7 @@
 is_name(expr) = isa(expr, Symbol)
-function eval_name(name, env)
+
+eval_name(name, env) =
+begin
     for frame in reverse(env.stack)
         if haskey(frame.bindings, name)
             return frame.bindings[name]
