@@ -44,6 +44,11 @@ end
 
 # Evaluation
 function eval(expr, env)
+    # Transform lambda into a tuple containing the definition environment
+    if isa(expr, Expr) && expr.head == :(->)
+        expr = (expr, env)
+    end
+
     if is_self_evaluating(expr) expr
     elseif is_call(expr) eval_call(expr, env)
     elseif is_and(expr) eval_and(expr, env)
@@ -56,7 +61,7 @@ function eval(expr, env)
     elseif is_function_definition(expr, env) eval_function_definition(expr, env)
     elseif is_assignment(expr, env) eval_assignment(expr, env)
     elseif is_function_assignment(expr, env) eval_function_assignment(expr, env)
-    elseif is_lambda(expr) eval_lambda(expr)
+    elseif is_lambda(expr) eval_lambda(expr, env)
     else throw("Not implemented (EVAL)")
     end
 end
@@ -67,21 +72,39 @@ eval_exprs(exprs, env) = map(expr -> eval(expr, env), exprs)
 is_self_evaluating(expr) = isa(expr, Int) || isa(expr, Float64) || isa(expr, Bool) || isa(expr, String) || is_lambda(expr)
 
 # Lambda Expressions
-is_lambda(expr) = isa(expr, Expr) && expr.head == :(->)
-lambda_params(expr) = isa(expr.args[1], Symbol) ? [expr.args[1]] : expr.args[1].args
-lambda_body(expr) = expr.args[2]
-eval_lambda(expr) = make_lambda(lambda_params(expr), lambda_body(expr))
-make_lambda(args, body) = :($(Expr(:tuple, (args...))) -> $(body.args[2]))
+is_lambda(expr) =
+    if isa(expr, Tuple)
+        let (lambda, env) = expr
+            isa(lambda, Expr) && lambda.head == :(->) && isa(env, Env)
+        end
+    elseif isa(expr, Expr)
+        expr.head == :(->)
+    else
+        false
+    end
+lambda_params(expr) =
+    let (lambda, _) = expr
+        isa(lambda.args[1], Symbol) ? [lambda.args[1]] : lambda.args[1].args
+    end
+lambda_body(expr) = expr[1].args[2]
+lambda_env(expr) = expr[2]
+eval_lambda(expr, env) = make_lambda(lambda_params(expr), lambda_body(expr), env)
+make_lambda(args, body, env) = (:($(Expr(:tuple, (args...))) -> $(body.args[2])), env)
 
 # Call Expressions
 is_call(expr) = isa(expr, Expr) && expr.head == :call
 call_op(call) = call.args[1]
 call_args(call) = call.args[2:end]
-function eval_call(call, env)
-    f = eval(call_op(call), env)
-    args = eval_exprs(call_args(call), env)
-    is_lambda(f) ? eval(lambda_body(f), extend_env(env, lambda_params(f), eval_exprs(args, env))) : f(args...)
-end
+eval_call(call, env) =
+    let f = eval(call_op(call), env), args = eval_exprs(call_args(call), env)
+        if is_lambda(f)
+            let extended_env = extend_env(lambda_env(f), lambda_params(f), args)
+                eval(lambda_body(f), extended_env)
+            end
+        else
+            f(args...)
+        end
+    end
 
 # And and Or Expressions
 is_and(expr) = isa(expr, Expr) && expr.head == :(&&)
@@ -128,11 +151,11 @@ let_names(expr) =
              [extract_names(expr.args[1])]
         end
     end
-let_inits(expr) =
+let_inits(expr, env) =
     let
         extract_inits(expr) =
             if is_call(expr.args[1])
-                make_lambda(expr.args[1].args[2:end], expr.args[2])
+                make_lambda(expr.args[1].args[2:end], expr.args[2], env)
             else
                 expr.args[2]
             end
@@ -144,7 +167,7 @@ let_inits(expr) =
     end
 let_body(expr) = expr.args[2]
 eval_let(expr, env) =
-    eval(:($(make_lambda(let_names(expr), let_body(expr)))($(let_inits(expr)...))) , env)
+    eval(:($(make_lambda(let_names(expr), let_body(expr), env))($(let_inits(expr, env)...))) , env)
 
 # Assignments/Definitions
 is_definition(expr, env) =
@@ -161,9 +184,9 @@ eval_definition(expr, env) =
 is_function_definition(expr, env) =
     isa(expr, Expr) && expr.head == :(=) && !has_name(expr.args[1], env) && isa(expr.args[1], Expr)
 function_definition_name(expr) = expr.args[1].args[1]
-function_definition_init(expr) = make_lambda(expr.args[1].args[2:end], expr.args[2])
+function_definition_init(expr, env) = make_lambda(expr.args[1].args[2:end], expr.args[2], env)
 eval_function_definition(expr, env) =
-    eval_definition(:($(function_definition_name(expr)) = $(function_definition_init(expr))), env)
+    eval_definition(:($(function_definition_name(expr)) = $(function_definition_init(expr, env))), env)
 
 is_assignment(expr, env) =
     isa(expr, Expr) && expr.head == :(=) && has_name(expr.args[1], env) && isa(expr.args[1], Symbol)
@@ -178,7 +201,7 @@ eval_assignment(expr, env) =
 is_function_assignment(expr, env) =
     isa(expr, Expr) && expr.head == :(=) && has_name(expr.args[1], env) && isa(expr.args[1], Expr)
 function_assignment_name(expr) = expr.args[1].args[1]
-function_assignment_init(expr) = make_lambda(expr.args[1].args[2:end], expr.args[2])
+function_assignment_init(expr, env) = make_lambda(expr.args[1].args[2:end], expr.args[2], env)
 eval_function_assignment(expr, env) =
     eval_assignment(:($(function_assignment_name(expr)) = $(function_assignment_init(expr))), env)
 
