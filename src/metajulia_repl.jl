@@ -4,6 +4,8 @@ is_valid_expr(expr) =
     !isa(expr, Expr) ||
     (isa(expr, Expr) && expr.head != :incomplete && expr.head != :error)
 
+metajulia_eval(expr) = eval(expr, empty_env())
+
 function metajulia_repl()
     while true
         print(">> ")
