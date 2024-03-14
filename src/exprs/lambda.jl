@@ -1,33 +1,35 @@
 #=
-Lambdas are repsented as a tuple of (env, lambda).
+Function captures a lambda and the environment where it was defined.
 The environment is need to support lexical scoping, as the environment
 where the function is defined (lexical scope) is different from the environment
 where it's called (dynamic scope).
 =#
-is_lambda(expr) =
-    if isa(expr, Tuple)
-        let (lambda, env) = expr
-            isa(lambda, Expr) && lambda.head == :(->) && isa(env, Env)
-        end
-    elseif isa(expr, Expr)
-        expr.head == :(->)
-    else
-        false
-    end
+struct Function
+    lambda
+    env
+end
 
-lambda_params(expr) =
-    let (lambda, _) = expr
-        isa(lambda.args[1], Symbol) ? [lambda.args[1]] : lambda.args[1].args
-    end
+is_function(expr) = isa(expr, Function)
+function_lambda(expr) = expr.lambda
+function_env(expr) = expr.env
+eval_function(expr) = make_lambda(lambda_params(expr.lambda), lambda_body(expr.lambda), expr.env)
 
-lambda_body(expr) = expr[1].args[2]
-lambda_env(expr) = expr[2]
 
-# Lambdas are self-evaluating
+#=
+Lambdas are the Expr given by Meta.parse
+They contain a list of parameters and a body
+=#
+
+is_lambda(expr) = isa(expr, Expr) && expr.head == :(->)
+lambda_params(expr) = isa(expr.args[1], Symbol) ? [expr.args[1]] : expr.args[1].args
+lambda_body(expr) = expr.args[2]
+
+# Called when defining a lambda, we need to capture the environment to support
+# lexical scoping
+make_lambda(args, body, env) = Function(:($(Expr(:tuple, (args...))) -> $(body.args[2])), copy(env))
+
 eval_lambda(expr, env) = make_lambda(lambda_params(expr), lambda_body(expr), env)
 
-# Create a lambda expression
-make_lambda(args, body, env) = (:($(Expr(:tuple, (args...))) -> $(body.args[2])), env)
 
 is_call(expr) = isa(expr, Expr) && expr.head == :call
 call_op(call) = call.args[1]
@@ -35,10 +37,12 @@ call_args(call) = call.args[2:end]
 
 eval_call(call, env) =
     let f = eval(call_op(call), env), args = eval_exprs(call_args(call), env)
-        # If the calee is a lambda, extend the environment and evaluate its body
-        if is_lambda(f)
-            let extended_env = extend_env(lambda_env(f), lambda_params(f), args)
-                eval(lambda_body(f), extended_env)
+        # If the calee is a function, extend the function's environment
+        # and evaluate its body
+        if is_function(f)
+            let (lambda, lambda_env) = (function_lambda(f), function_env(f))
+                extend_env!(lambda_env, lambda_params(lambda), args)
+                eval(lambda_body(lambda), lambda_env)
             end
         else
             f(args...)

@@ -17,36 +17,33 @@ initial_bindings::Dict{Symbol, Any} = Dict(
 
 empty_env() = Env([Frame(initial_bindings)])
 
-# Copy the current environment and extend it with new bindings in a new frame
-function extend_env(env, names, values)
-    new_env = Env(deepcopy(env.stack))
-    new_frame = Frame(Dict())
-    for (name, value) in zip(names, values)
-        new_frame.bindings[name] = value
-    end
-    push!(new_env.stack, new_frame)
-    new_env
-end
+Base.copy(env::Env) = Env(copy(env.stack))
 
-# Destructively extend the environment with new binding at the last frame
-extend_env!(env, name, value) = env.stack[end].bindings[name] = value
-
-# Destructively modify the environment by changing the value of an existing binding
-function modify_env!(env, name, value)
-    for frame in reverse(env.stack)
-        if haskey(frame.bindings, name)
-            frame.bindings[name] = value
-            return
+# Destructively extend the environment by creating a new frame where
+# the new bindings are added. Note the ! in the function name.
+extend_env!(env, names, values) =
+    begin
+        new_frame = Frame(Dict())
+        for (name, value) in zip(names, values)
+            new_frame.bindings[name] = value
         end
+        push!(env.stack, new_frame)
     end
-    throw("Variable '$name' not found")
-end
 
-function has_name(name, env)
-    for frame in reverse(env.stack)
-        if haskey(frame.bindings, name)
-            return true
+# Destructively modify the environment by adding/replacing a binding.
+# Note the ! in the function name.
+add_binding!(env, name, value) = env.stack[end].bindings[name] = value
+
+# Search for a binding in the environment
+has_name(name, env) =
+    begin
+        for frame in reverse(env.stack)
+            if haskey(frame.bindings, name)
+                return true
+            end
         end
+        false
     end
-    false
-end
+
+# Search for a binding in the current frame
+has_name_in_frame(name, env) = haskey(env.stack[end].bindings, name)

@@ -1,6 +1,6 @@
 is_definition(expr, env) =
     isa(expr, Expr) && expr.head == :(=) && isa(expr.args[1], Symbol) &&
-    !has_name(expr.args[1], env)
+    !has_name_in_frame(expr.args[1], env)
 
 definition_name(expr) = expr.args[1]
 
@@ -8,8 +8,9 @@ definition_init(expr) = expr.args[2]
 
 eval_definition(expr, env) =
     let init = eval(definition_init(expr), env)
-        # Destructively extend the environment (note the !)
-        extend_env!(env, definition_name(expr), eval(definition_init(expr), env))
+        # Destructively add a new binding to the last frame of the environment
+        # (note the !)
+        add_binding!(env, definition_name(expr), init)
         init
     end
 

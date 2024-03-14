@@ -10,11 +10,6 @@ include("exprs/operator.jl")
 include("exprs/self-evaluating.jl")
 
 function eval(expr, env)
-    # Transform lambda into a tuple containing the definition environment
-    if isa(expr, Expr) && expr.head == :(->)
-        expr = (expr, env)
-    end
-
     if is_self_evaluating(expr) expr
     elseif is_call(expr) eval_call(expr, env)
     elseif is_and(expr) eval_and(expr, env)
