@@ -1,6 +1,6 @@
 is_assignment(expr, env) =
     isa(expr, Expr) && expr.head == :(=) && isa(expr.args[1], Symbol) &&
-    has_name(expr.args[1], env)
+    has_name_in_frame(expr.args[1], env)
 
 assignment_name(expr) = expr.args[1]
 
@@ -8,8 +8,9 @@ assignment_init(expr) = expr.args[2]
 
 eval_assignment(expr, env) =
     let init = eval(assignment_init(expr), env)
-        # Destructively modify the environment (note the !)
-        modify_env!(env, assignment_name(expr), init)
+        # Destructively add a new binding to the last frame of the environment
+        # (note the !)
+        add_binding!(env, assignment_name(expr), init)
         init
     end
 
