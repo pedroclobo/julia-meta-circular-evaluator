@@ -19,6 +19,18 @@ empty_env() = Env([Frame(initial_bindings)])
 
 Base.copy(env::Env) = Env(copy(env.stack))
 
+# Extend the environment by creating a new frame where the new bindings are added.
+extend_env(env, names, values) =
+    begin
+        new_env = copy(env)
+        new_frame = Frame(Dict())
+        for (name, value) in zip(names, values)
+            new_frame.bindings[name] = value
+        end
+        push!(new_env.stack, new_frame)
+        new_env
+    end
+
 # Destructively extend the environment by creating a new frame where
 # the new bindings are added. Note the ! in the function name.
 extend_env!(env, names, values) =
