@@ -33,15 +33,17 @@ let_inits(expr, env) =
 let_body(expr) = expr.args[2]
 
 #=
-Evaluate let as an anonymous function call
+The following is done to support recursive function calls in lexical scope:
 
-let x = 1 + 2, y = 2 * 3
-    x - y
-end
-
-it turned into
-
-((x, y) -> (x - y))(1 + 2, 2 * 3)
+1. Create a new empty frame.
+2. Initialize the let inits in the new frame.
+3. Bind the names to the inits in the new frame.
 =#
 eval_let(expr, env) =
-    eval(:($(make_lambda(let_names(expr), let_body(expr), env))($(let_inits(expr, env)...))) , env)
+    let extended_env = extend_env(env, [], [])
+        inits = eval_exprs(let_inits(expr, extended_env), env)
+        for (name, init) in zip(let_names(expr), inits)
+            add_binding!(extended_env, name, init)
+        end
+        eval(let_body(expr), extended_env)
+    end
