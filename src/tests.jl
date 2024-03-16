@@ -263,3 +263,8 @@ let fact(n) = n == 0 ? 1 : n * fact(n - 1)
     fact(3)
 end
 """, 6)
+
+# Reflection
+test(":foo", :foo)
+test(":(foo + bar)", :(foo + bar))
+test(":((1 + 2) * $(1 + 2))", :((1 + 2) * 3))

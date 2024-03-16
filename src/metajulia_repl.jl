@@ -6,6 +6,21 @@ is_valid_expr(expr) =
 
 metajulia_eval(expr) = eval(expr, empty_env())
 
+print_expr(expr) = 
+    begin
+        if isa(expr, String)
+            println("\"$expr\"")
+        elseif isa(expr, Symbol)
+            println(":$expr")
+        elseif isa(expr, Expr)
+            println(":($expr)")
+        elseif is_function(expr)
+            println("<function>")
+        else
+            println(expr)
+        end
+    end
+
 function metajulia_repl()
     while true
         print(">> ")
@@ -15,6 +30,8 @@ function metajulia_repl()
             expr = string(expr, '\n', readline())
             parsed_expr = Meta.parse(raise=false, expr)
         end
-        println(eval(Meta.parse(expr), empty_env()))
+        expr = eval(Meta.parse(expr), empty_env())
+        dump(expr)
+        print_expr(expr)
     end
 end
