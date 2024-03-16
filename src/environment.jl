@@ -46,6 +46,10 @@ extend_env!(env, names, values) =
 # Note the ! in the function name.
 add_binding!(env, name, value) = env.stack[end].bindings[name] = value
 
+# Destructively modify the environment by adding/replacing a binding to the global frame.
+# Note the ! in the function name.
+add_binding_to_global_frame!(env, name, value) = env.stack[1].bindings[name] = value
+
 # Search for a binding in the environment
 has_name(name, env) =
     begin
@@ -59,3 +63,9 @@ has_name(name, env) =
 
 # Search for a binding in the current frame
 has_name_in_frame(name, env) = haskey(env.stack[end].bindings, name)
+
+# Search for a binding in the global frame
+has_name_in_global_frame(name, env) = haskey(env.stack[1].bindings, name)
+
+
+
