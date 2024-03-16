@@ -26,7 +26,7 @@ lambda_body(expr) = expr.args[2]
 
 # Called when defining a lambda, we need to capture the environment to support
 # lexical scoping
-make_lambda(args, body, env) = Function(:($(Expr(:tuple, (args...))) -> $(body.args[2])), copy(env))
+make_lambda(args, body, env) = Function(:($(Expr(:tuple, (args...))) -> $(body.args[2])), env)
 
 eval_lambda(expr, env) = make_lambda(lambda_params(expr), lambda_body(expr), env)
 
