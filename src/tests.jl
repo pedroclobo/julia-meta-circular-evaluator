@@ -212,7 +212,6 @@ begin
     incr()
     incr()
 end""", 3)
-test("let secret = 1234; global show_secret() = secret end; show_secret()", 1234)
 test("""
 begin
     let
@@ -222,11 +221,19 @@ begin
 end""", 1)
 test("""
 begin
+    let secret = 1234
+        global show_secret() = secret
+    end
+    show_secret()
+end
+""", 1234)
+test("""
+begin
     let priv_balance = 0
         global deposit = quantity -> priv_balance = priv_balance + quantity
         global withdraw = quantity -> priv_balance = priv_balance - quantity
     end
-    deposit(100)
+    deposit(200)
 end""", 200)
 test("""
 begin
@@ -234,8 +241,8 @@ begin
         global deposit = quantity -> priv_balance = priv_balance + quantity
         global withdraw = quantity -> priv_balance = priv_balance - quantity
     end
-    deposit(100)
-    withdraw(150)
+    deposit(200)
+    withdraw(50)
 end""", 150)
 
 # Short-Circuit
