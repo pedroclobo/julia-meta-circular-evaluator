@@ -16,6 +16,8 @@ print_expr(expr) =
             println(":($expr)")
         elseif is_function(expr)
             println("<function>")
+        elseif is_fexpr(expr)
+            println("<fexpr>")
         else
             println(expr)
         end
