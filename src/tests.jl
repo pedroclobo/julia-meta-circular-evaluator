@@ -276,3 +276,15 @@ begin
     :(\$a + \$b)
 end
 """, :(1 + 2))
+
+# Fexprs
+test("""
+begin
+    identity_fexpr(x) := x
+    identity_fexpr(1 + 2)
+end""", :(1 + 2))
+test("""
+begin
+    identity_fexpr(x) := x
+    identity_fexpr(1 + 2) == :(1 + 2)
+end""", true)
