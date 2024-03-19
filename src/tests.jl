@@ -2,7 +2,8 @@ include("evaluator.jl")
 
 function test(input, expected)
     try
-        eval(Meta.parse(input), empty_env()) == expected || error("Test Failed")
+        evaluated = eval(Meta.parse(input), empty_env())
+        @assert evaluated == expected
     catch e
         println("FAILED\n$input")
         rethrow(e)
@@ -265,6 +266,13 @@ end
 """, 6)
 
 # Reflection
-test(":foo", :foo)
+test(":foo", Symbol(:foo))
 test(":(foo + bar)", :(foo + bar))
-test(":((1 + 2) * $(1 + 2))", :((1 + 2) * 3))
+test(":((1 + 2) * \$(1 + 2))", :((1 + 2) * 3))
+test("""
+begin
+    a = 1
+    b = 2
+    :(\$a + \$b)
+end
+""", :(1 + 2))
