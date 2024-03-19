@@ -8,10 +8,11 @@ include("exprs/let-expression.jl")
 include("exprs/name.jl")
 include("exprs/operator.jl")
 include("exprs/self-evaluating.jl")
-include("exprs/quote.jl")
+include("exprs/quasiquote.jl")
 
 function eval(expr, env)
     if is_self_evaluating(expr) expr
+    elseif is_quasiquote(expr) eval_quasiquote(expr, env)
     elseif is_call(expr) eval_call(expr, env)
     elseif is_and(expr) eval_and(expr, env)
     elseif is_or(expr) eval_or(expr, env)
@@ -24,7 +25,6 @@ function eval(expr, env)
     elseif is_assignment(expr, env) eval_assignment(expr, env)
     elseif is_global_assignment(expr, env) eval_global_assignment(expr, env)
     elseif is_lambda(expr) eval_lambda(expr, env)
-    elseif is_quote(expr) eval_quote(expr, env)
     else throw("Not implemented (EVAL)")
     end
 end

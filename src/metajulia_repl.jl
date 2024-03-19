@@ -6,7 +6,7 @@ is_valid_expr(expr) =
 
 metajulia_eval(expr) = eval(expr, empty_env())
 
-print_expr(expr) = 
+print_expr(expr) =
     begin
         if isa(expr, String)
             println("\"$expr\"")
@@ -31,7 +31,6 @@ function metajulia_repl()
             parsed_expr = Meta.parse(raise=false, expr)
         end
         expr = eval(Meta.parse(expr), empty_env())
-        dump(expr)
         print_expr(expr)
     end
 end
