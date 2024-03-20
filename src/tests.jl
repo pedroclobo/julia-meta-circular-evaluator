@@ -288,6 +288,58 @@ begin
     identity_fexpr(x) := x
     identity_fexpr(1 + 2) == :(1 + 2)
 end""", true)
+test("""
+begin
+    debug(expr) :=
+        let r = eval(expr)
+            r
+        end
+
+    let x = 1
+        1 + debug(x + 1)
+    end
+end
+""", 3)
+test("""
+begin
+    let a = 1
+        global puzzle(x) :=
+            let b = 2
+                eval(x) + a + b
+            end
+    end
+
+    let a = 3, b = 4
+        puzzle(a + b)
+    end
+end
+""", 10)
+test("""
+begin
+    let a = 1
+        global puzzle(x) :=
+            let b = 2
+                eval(x) + a + b
+            end
+    end
+
+    let eval = 123
+        puzzle(eval)
+    end
+end
+""", 126)
+test("""
+begin
+    mystery() := eval
+    let a = 1, b = 2
+        global eval_here = mystery()
+    end
+    let a = 3, b = 4
+        global eval_there = mystery()
+    end
+    eval_here(:(a + b)) + eval_there(:(a + b))
+end
+""", 10)
 
 # Macros
 test("""
