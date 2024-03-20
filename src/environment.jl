@@ -13,6 +13,8 @@ initial_bindings::Dict{Symbol, Any} = Dict(
     :! => !,
     :~ => ~, :& => &, :| => |, :⊻ => ⊻, :⊼ => ⊼, :⊽ => ⊽, :>>> => >>>, :>> => >>, :<< => <<,
     :(==) => ==, :(!=) => !=, :≠ => ≠, :(<) => <, :(<=) => <=, :≤ => ≤, :(>) => >, :(>=) => >=, :≥ => ≥,
+    :(println) => println, :(print) => print,
+    :(gensym) => gensym
 )
 
 empty_env() = Env([Frame(initial_bindings)])
