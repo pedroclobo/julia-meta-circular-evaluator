@@ -14,6 +14,8 @@ function_lambda(expr) = expr.lambda
 function_env(expr) = expr.env
 eval_function(expr) = make_lambda(lambda_params(expr.lambda), lambda_body(expr.lambda), expr.env)
 
+Base.show(io::IO, _::Function) = print(io, "<function>")
+
 
 #=
 Lambdas are the Expr given by Meta.parse
