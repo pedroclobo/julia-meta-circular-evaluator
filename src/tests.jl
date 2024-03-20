@@ -288,3 +288,19 @@ begin
     identity_fexpr(x) := x
     identity_fexpr(1 + 2) == :(1 + 2)
 end""", true)
+
+# Macros
+test("""
+begin
+    when(condition, action) \$= :(\$condition ? \$action : false)
+    abs(x) = (when(x < 0, (x = -x;)); x)
+    abs(-5)
+end
+""", 5)
+test("""
+begin
+    when(condition, action) \$= :(\$condition ? \$action : false)
+    abs(x) = (when(x < 0, (x = -x;)); x)
+    abs(5)
+end
+""", 5)
