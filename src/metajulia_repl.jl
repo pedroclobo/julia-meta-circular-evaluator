@@ -18,6 +18,8 @@ print_expr(expr) =
             println("<function>")
         elseif is_fexpr(expr)
             println("<fexpr>")
+        elseif is_macro(expr)
+            println("<macro>")
         else
             println(expr)
         end
