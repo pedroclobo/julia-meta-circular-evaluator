@@ -70,7 +70,7 @@ eval_definition(expr, env) =
         let init = eval(init(expr, env), env)
             if is_local_definition(expr, env)
                 add_binding!(env, name(expr, env), init)
-            else
+            elseif is_global_definition(expr, env)
                 add_binding_to_global_frame!(env, name(expr, env), init)
             end
             init
@@ -92,4 +92,14 @@ is_global_assignment(expr, env) =
         (is_fexpr_attribution(expr.args[1]) && has_name_in_global_frame(expr.args[1].args[1].args[1], env)) ||
         (is_macro_attribution(expr.args[1]) && has_name_in_global_frame(expr.args[1].args[1].args[1], env))
 
-eval_assignment(expr, env) = eval_definition(expr, env)
+eval_assignment(expr, env) =
+    begin
+        let init = eval(init(expr, env), env)
+            if is_local_assignment(expr, env)
+                add_binding!(env, name(expr, env), init)
+            elseif is_global_assignment(expr, env)
+                add_binding_to_global_frame!(env, name(expr, env), init)
+            end
+            init
+        end
+    end
