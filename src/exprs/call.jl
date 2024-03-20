@@ -18,6 +18,11 @@ eval_call(call, env) =
                 extend_env!(lambda_env, lambda_params(lambda), call_args(call))
                 eval(lambda_body(lambda), lambda_env)
             end
+        elseif is_macro(f)
+            let (lambda, lambda_env) = (macro_lambda(f), macro_env(f))
+                extend_env!(lambda_env, lambda_params(lambda), call_args(call))
+                eval(eval(lambda_body(lambda), lambda_env), env)
+            end
         else
             let (args = eval_exprs(call_args(call), env))
                 f(args...)

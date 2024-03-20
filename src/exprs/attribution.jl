@@ -10,6 +10,10 @@ is_fexpr_attribution(expr) =
     isa(expr, Expr) && expr.head == :(:=) &&
     isa(expr.args[1], Expr)
 
+is_macro_attribution(expr) =
+    isa(expr, Expr) && expr.head == :($=) &&
+    isa(expr.args[1], Expr)
+
 name(expr, env) =
     begin
         local_name(expr) =
@@ -31,6 +35,8 @@ init(expr, env) =
         local_init(expr, env) =
             if is_fexpr_attribution(expr)
                 make_fexpr(expr.args[1].args[2:end], expr.args[2], env)
+            elseif is_macro_attribution(expr)
+                make_macro(expr.args[1].args[2:end], expr.args[2], env)
             elseif is_call(expr.args[1])
                 make_lambda(expr.args[1].args[2:end], expr.args[2], env)
             else
@@ -49,13 +55,15 @@ is_definition(expr, env) = is_local_definition(expr, env) || is_global_definitio
 is_local_definition(expr, env) =
     (is_variable_attribution(expr) && !has_name_in_frame(expr.args[1], env)) ||
     (is_function_attribution(expr) && !has_name_in_frame(expr.args[1].args[1], env)) ||
-    (is_fexpr_attribution(expr) && !has_name_in_frame(expr.args[1].args[1], env))
+    (is_fexpr_attribution(expr) && !has_name_in_frame(expr.args[1].args[1], env)) ||
+    (is_macro_attribution(expr) && !has_name_in_frame(expr.args[1].args[1], env))
 
 is_global_definition(expr, env) =
     isa(expr, Expr) && expr.head == :global &&
         (is_variable_attribution(expr.args[1]) && !has_name_in_global_frame(expr.args[1].args[1], env)) ||
         (is_function_attribution(expr.args[1]) && !has_name_in_global_frame(expr.args[1].args[1].args[1], env)) ||
-        (is_fexpr_attribution(expr.args[1]) && !has_name_in_global_frame(expr.args[1].args[1].args[1], env))
+        (is_fexpr_attribution(expr.args[1]) && !has_name_in_global_frame(expr.args[1].args[1].args[1], env)) ||
+        (is_macro_attribution(expr) && !has_name_in_frame(expr.args[1].args[1].args[1], env))
 
 eval_definition(expr, env) =
     begin
@@ -74,12 +82,14 @@ is_assignment(expr, env) = is_local_assignment(expr, env) || is_global_assignmen
 is_local_assignment(expr, env) =
     (is_variable_attribution(expr) && has_name_in_frame(expr.args[1], env)) ||
     (is_function_attribution(expr) && has_name_in_frame(expr.args[1].args[1], env)) ||
-    (is_fexpr_attribution(expr) && has_name_in_frame(expr.args[1].args[1], env))
+    (is_fexpr_attribution(expr) && has_name_in_frame(expr.args[1].args[1], env)) ||
+    (is_macro_attribution(expr) && has_name_in_frame(expr.args[1].args[1], env))
 
 is_global_assignment(expr, env) =
     isa(expr, Expr) && expr.head == :global &&
         (is_variable_attribution(expr.args[1]) && has_name_in_global_frame(expr.args[1].args[1], env)) ||
         (is_function_attribution(expr.args[1]) && has_name_in_global_frame(expr.args[1].args[1].args[1], env)) ||
-        (is_fexpr_attribution(expr.args[1]) && has_name_in_global_frame(expr.args[1].args[1].args[1], env))
+        (is_fexpr_attribution(expr.args[1]) && has_name_in_global_frame(expr.args[1].args[1].args[1], env)) ||
+        (is_macro_attribution(expr.args[1]) && has_name_in_global_frame(expr.args[1].args[1].args[1], env))
 
 eval_assignment(expr, env) = eval_definition(expr, env)
