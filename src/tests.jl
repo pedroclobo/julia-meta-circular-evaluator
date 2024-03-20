@@ -245,6 +245,12 @@ begin
     deposit(200)
     withdraw(50)
 end""", 150)
+test("""
+let n = 1
+    n = n - 1
+    n
+end
+""", 0)
 
 # Short-Circuit
 test("""
