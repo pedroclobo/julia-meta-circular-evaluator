@@ -13,6 +13,7 @@ initial_bindings::Dict{Symbol, Any} = Dict(
     :! => !,
     :~ => ~, :& => &, :| => |, :⊻ => ⊻, :⊼ => ⊼, :⊽ => ⊽, :>>> => >>>, :>> => >>, :<< => <<,
     :(==) => ==, :(!=) => !=, :≠ => ≠, :(<) => <, :(<=) => <=, :≤ => ≤, :(>) => >, :(>=) => >=, :≥ => ≥,
+    :(eval) => eval,
     :(println) => println, :(print) => print,
     :(gensym) => gensym
 )
@@ -70,4 +71,5 @@ has_name_in_frame(name, env) = haskey(env.stack[end].bindings, name)
 has_name_in_global_frame(name, env) = haskey(env.stack[1].bindings, name)
 
 
-
+# Reify the current environment
+is_current_env(expr) = expr == :(current-environment)

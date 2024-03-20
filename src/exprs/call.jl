@@ -16,6 +16,8 @@ eval_call(call, env) =
         elseif is_fexpr(f)
             let (lambda, lambda_env) = (function_lambda(f), function_env(f))
                 extend_env!(lambda_env, lambda_params(lambda), call_args(call))
+                # eval evalutes the expression in the scope of the call
+                add_binding!(lambda_env, :eval, x -> eval(x, env))
                 eval(lambda_body(lambda), lambda_env)
             end
         elseif is_macro(f)
