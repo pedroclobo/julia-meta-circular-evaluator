@@ -362,3 +362,33 @@ begin
     abs(5)
 end
 """, 5)
+test("""
+begin
+    repeat_until(condition, action) \$=
+        :(let ;
+            loop() = (\$action; \$condition ? false : loop())
+            loop()
+        end)
+
+    let n = 4, a = 0
+        repeat_until(n == 0, (a = a + 1; n = n - 1))
+        a
+    end
+end
+""", 4)
+test("""
+begin
+    repeat_until(condition, action) \$=
+        let loop = gensym()
+            :(let ;
+                \$loop() = (\$action; \$condition ? false : \$loop())
+                \$loop()
+            end)
+    end
+
+    let loop = 0, i = 3
+        repeat_until(i == 0, (loop = loop + 1; i = i - 1))
+        loop
+    end
+end
+""", 3)
