@@ -63,7 +63,7 @@ is_global_definition(expr, env) =
         (is_variable_attribution(expr.args[1]) && !has_name_in_global_frame(expr.args[1].args[1], env)) ||
         (is_function_attribution(expr.args[1]) && !has_name_in_global_frame(expr.args[1].args[1].args[1], env)) ||
         (is_fexpr_attribution(expr.args[1]) && !has_name_in_global_frame(expr.args[1].args[1].args[1], env)) ||
-        (is_macro_attribution(expr) && !has_name_in_frame(expr.args[1].args[1].args[1], env))
+        (is_macro_attribution(expr.args[1]) && !has_name_in_frame(expr.args[1].args[1].args[1], env))
 
 eval_definition(expr, env) =
     begin
