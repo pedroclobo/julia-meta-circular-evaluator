@@ -126,6 +126,11 @@ test("""
 let a = 1
     a + 2
 end""", 3)
+test("""
+let a = 1, b = a
+    b + 1
+end
+""", 2)
 
 # Anonymous Functions
 test("(() -> 5)()", 5)
