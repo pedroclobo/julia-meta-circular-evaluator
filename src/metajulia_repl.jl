@@ -19,3 +19,5 @@ metajulia_repl() =
         show(expr)
         println()
     end
+
+Base.show(io::IO, _::Core.Function) = print(io, "<function>")
