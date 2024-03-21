@@ -41,9 +41,15 @@ The following is done to support recursive function calls in lexical scope:
 =#
 eval_let(expr, env) =
     let extended_env = extend_env(env, [], [])
-        inits = eval_exprs(let_inits(expr, extended_env), env)
-        for (name, init) in zip(let_names(expr), inits)
-            add_binding!(extended_env, name, init)
+        #=
+        In Julia,
+        `let a = 1, b = a
+             b
+         end`
+        should return 1
+        =#
+        for (name, init) in zip(let_names(expr), let_inits(expr, extended_env))
+            add_binding!(extended_env, name, eval(init, extended_env))
         end
         eval(let_body(expr), extended_env)
     end
