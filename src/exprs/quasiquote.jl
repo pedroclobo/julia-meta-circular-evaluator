@@ -14,9 +14,7 @@ expand(form, env) =
     elseif is_quasiquote(form)
         expand(quasiquoted_form(form), env)
     elseif isa(form, Expr)
-        for i in 1:length(form.args)
-            form.args[i] = expand(form.args[i], env)
-        end
+        form.args = map(i -> expand(i, env), form.args)
         form
     else
         form
