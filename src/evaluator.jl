@@ -14,7 +14,6 @@ include("exprs/self-evaluating.jl")
 
 function eval(expr, env)
     if is_self_evaluating(expr) expr
-    elseif is_current_env(expr) env
     elseif is_quasiquote(expr) eval_quasiquote(expr, env)
     elseif is_lambda(expr) eval_lambda(expr, env)
     elseif is_fexpr(expr) eval_fexpr(expr, env)
