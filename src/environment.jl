@@ -85,7 +85,3 @@ has_name_in_local_frames(name, env) =
 
 # Search for a binding in the global frame
 has_name_in_global_frame(name, env) = haskey(env.stack[1].bindings, name)
-
-
-# Reify the current environment
-is_current_env(expr) = expr == :(current-environment)
