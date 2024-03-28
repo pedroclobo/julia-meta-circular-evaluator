@@ -1,7 +1,9 @@
 # Meta-Circular Evaluator for Julia
 A meta-circular evaluator for Julia Project for "Advanced Programming" @ IST - MEIC-T (2023-2024)
 
-[Statement](docs/statement.pdf)
+[Statement](docs/statement.pdf)\
+[Presentation Slides](docs/presentation.pdf)\
+[Presentation Video](docs/recording.mp4)
 
 ## Running the REPL
 To try out the REPL, you can run the following command in the root directory of the project:

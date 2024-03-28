@@ -1,0 +1,234 @@
+\documentclass[aspectratio=169]{beamer}
+\usetheme{Copenhagen}
+
+\setbeamertemplate{headline}{}              % Remove section headline
+\setbeamertemplate{footline}[frame number]  % Number the slides
+\setbeamertemplate{navigation symbols}{}    % Remove navigation bar
+
+\title{Meta-Circular Evaluator for Julia}
+\author{Pedro Lobo \and Rómulo Kaidussis \and Tomás Nascimento}
+\date{Advanced Programming - 2023/2024}
+
+\begin{document}
+
+\maketitle
+
+\begin{frame}{Overview}
+    \tableofcontents
+\end{frame}
+
+\section{Environments}
+\begin{frame}[fragile]{Environments}
+    \begin{block}{Implementation}
+        \begin{itemize}
+            \item<1-> Stack of set of mappings.
+            \item<2-> Each mapping associates a name with a value.
+            \item<3-> Names are represented with symbols.
+        \end{itemize}
+    \end{block}
+    \begin{exampleblock}{Code}<4->
+        \footnotesize \begin{verbatim}struct Frame
+    bindings::Dict{Symbol, Any}
+end
+
+struct Env
+    stack::Vector{Frame}
+end\end{verbatim}
+    \end{exampleblock}
+\end{frame}
+
+\begin{frame}[fragile]{Environments}
+    \begin{block}{Initial Bindings}
+        \begin{itemize}
+            \item<1-> Logical Operators
+            \item<2-> Arithmetic Operators
+            \item<3-> Other functions
+        \end{itemize}
+    \end{block}
+
+    \begin{exampleblock}{Code}<4->
+        \footnotesize \begin{verbatim}initial_bindings::Dict{Symbol, Any} = Dict(
+    :+ => +, :- => -, :* => *, :/ => /, ...
+    :! => !, :~ => ~, :& => &, :| => |, ...
+    :(==) => ==, :(!=) => !=, :(<) => <, :(<=) => <=, ...
+    :(println) => println, :(print) => print,
+    :(gensym) => gensym
+)\end{verbatim}
+    \end{exampleblock}
+\end{frame}
+
+\section{Let Expressions}
+\begin{frame}[fragile]{Let Expressions}
+    \begin{exampleblock}{Scheme}<1->
+        \footnotesize \begin{verbatim}
+>> (let ((a 1) (b (+ a 2)))
+       (+ a b))
+;Unbound variable: a
+        \end{verbatim}
+    \end{exampleblock}
+    \begin{exampleblock}{Julia}<2->
+        \footnotesize \begin{verbatim}
+>> let a = 1, b = a + 2
+      a + b
+   end
+4
+        \end{verbatim}
+    \end{exampleblock}
+\end{frame}
+
+\begin{frame}[fragile]{Let Expressions}
+    \begin{block}{Let Expressions}<1->
+        \begin{itemize}
+            \item<1-> Implemented in a similar way to the Scheme evaluator.
+            \item<3-> Environment is extended with the new mappings, one at a time.
+            \item<4-> Allows the evaluation of future initialization forms to reference back to already evaluated forms.
+        \end{itemize}
+    \end{block}
+    \begin{exampleblock}{Code}<2->
+        \footnotesize \begin{verbatim}
+let new_env = extend_env(env, [], [])
+    for (name, init) in zip(names(expr), inits(expr, new_env))
+        add_binding!(new_env, name, eval(init, new_env))
+    end
+    eval(body(expr), new_env)
+end\end{verbatim}
+    \end{exampleblock}
+\end{frame}
+
+\section{Functions}
+\begin{frame}[fragile]{Functions}
+    \begin{block}{Functions}
+        \begin{itemize}
+            \item<1-> Julia supports lexical scope.
+            \item<2-> Functions need to capture the environment.
+        \end{itemize}
+    \end{block}
+    \begin{exampleblock}{Code}<3->
+        \footnotesize \begin{verbatim}
+struct Function
+    lambda
+    env
+end\end{verbatim}
+    \end{exampleblock}
+\end{frame}
+
+\begin{frame}[fragile]{Recursive Functions}
+    \begin{block}{Recursive Functions}
+        \begin{itemize}
+            \item<1-> Create a new empty frame.
+            \item<2-> Initialize the let inits in the new frame.
+            \item<3-> Bind the names to the inits in the new frame.
+        \end{itemize}
+    \end{block}
+    \begin{exampleblock}{Code}<4->
+        \footnotesize \begin{verbatim}
+eval_let(expr, env) =
+    let extended_env = extend_env(env, [], [])
+        for (name, init) in zip(let_names(expr), let_inits(expr, extended_env))
+            add_binding!(extended_env, name, eval(init, extended_env))
+        end
+        eval(let_body(expr), extended_env)
+    end\end{verbatim}
+    \end{exampleblock}
+\end{frame}
+
+\section{Quasiquote}
+\begin{frame}[fragile]{Quasiquote}
+    \begin{block}{Quasiquote}
+        \begin{itemize}
+            \item Powerful meta-programming mechanism.
+        \end{itemize}
+    \end{block}
+\end{frame}
+
+\begin{frame}[fragile]{Quasiquote}
+    \begin{exampleblock}{Code}
+        \footnotesize \begin{verbatim}
+eval_quasiquote(expr, env) = expand(quasiquoted_form(expr), env)
+
+expand(form, env) =
+    if is_unquote(form)
+        eval(unquote_form(form), env)
+    elseif is_quasiquote(form)
+        expand(quasiquoted_form(form), env)
+    elseif isa(form, Expr)
+        form.args = map(i -> expand(i, env), form.args)
+        form
+    else
+        form
+    end\end{verbatim}
+    \end{exampleblock}
+\end{frame}
+
+\section{Fexprs}
+\begin{frame}[fragile]{Fexprs}
+    \begin{block}{Fexprs}
+        \begin{itemize}
+            \item<1-> Does not evaluate its arguments.
+        \end{itemize}
+    \end{block}
+    \begin{exampleblock}{Code}<2->
+        \footnotesize \begin{verbatim}
+struct Fexpr
+    lambda
+    env
+end\end{verbatim}
+    \end{exampleblock}
+\end{frame}
+
+\begin{frame}[fragile]{Fexprs}
+    \begin{block}{Fexprs}
+        \begin{itemize}
+            \item Does not evaluate its arguments.
+            \item Allows for the use of \texttt{eval}.
+        \end{itemize}
+    \end{block}
+    \begin{exampleblock}{Code}<2->
+        \footnotesize \begin{verbatim}
+let (lambda, lambda_env) = (function_lambda(f), function_env(f))
+    extend_env!(lambda_env, lambda_params(lambda), call_args(call))
+    add_binding!(lambda_env, :eval, x -> eval(x, env))
+    eval(lambda_body(lambda), lambda_env)
+end\end{verbatim}
+    \end{exampleblock}
+\end{frame}
+
+\section{Macros}
+\begin{frame}[fragile]{Macros}
+    \begin{exampleblock}{Code}
+        \footnotesize \begin{verbatim}
+struct Macro
+    lambda
+    env
+end\end{verbatim}
+    \end{exampleblock}
+\end{frame}
+
+\begin{frame}[fragile]{Macros}
+    \begin{block}{Macro Calls}
+        \begin{itemize}
+            \item<1-> Extend environment with unevaluated arguments.
+            \item<2-> Macro expansion is computed.
+            \item<3-> Macro expansion is evaluated.
+        \end{itemize}
+    \end{block}
+    \begin{exampleblock}{Code}<4->
+        \footnotesize \begin{verbatim}
+let (lambda, lambda_env) = (macro_lambda(f), macro_env(f))
+    extend_env!(lambda_env, lambda_params(lambda), call_args(call))
+    eval(eval(lambda_body(lambda), lambda_env), env)
+end\end{verbatim}
+    \end{exampleblock}
+\end{frame}
+
+\section{Test Suite}
+\begin{frame}[fragile]{Test Suite}
+    \begin{block}{Test Suite}
+        \begin{itemize}
+            \item<1-> 102 tests.
+            \item<2-> Located in the \texttt{tests.jl} file.
+        \end{itemize}
+    \end{block}
+\end{frame}
+
+\end{document}
